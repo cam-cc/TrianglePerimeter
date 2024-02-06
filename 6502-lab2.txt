@@ -102,116 +102,116 @@ delete:
      jmp handleInputLoop
 
 move:
-     sec
-     jsr PLOT
-     ldx #$15
-     clc
-     jsr PLOT
-     sec
-     jsr PLOT
+     sec             ; Set carry flag before subtraction 
+     jsr PLOT         
+     ldx #$15        ; Load X register with value $15 for further operations
+     clc            
+     jsr PLOT       
+     sec             
+     jsr PLOT        ; Call PLOT subroutine again
 
-     clc
-     sbc #$2F
+     clc             ; Clear carry flag before subtraction
+     sbc #$2F        ; Subtract hexadecimal value $2F from accumulator
 
+     asl             ; Arithmetic shift left by 1 bit x4
      asl
      asl
      asl
-     asl
 
-     pha
+     pha             ; Push accumulator onto stack to save current state
 
-     ldx #$16
-     clc
-     jsr PLOT
-     sec
-     jsr PLOT
+     ldx #$16        ; Load X register with $16 for next operations
+     clc             ; Clear carry flag for addition in PLOT subroutine
+     jsr PLOT        ; Call PLOT subroutine to plot a point
+     sec             ; Set carry flag before subtraction in PLOT subroutine
+     jsr PLOT        ; Call PLOT subroutine again
 
-     clc
-     sbc #$2F
-     pha
+     clc             
+     sbc #$2F        ; Subtract hexadecimal value $2F from accumulator
+     pha             ; Push accumulator onto stack to save current state
 
-     ldx #$00
-     iny
-     clc
-     jsr PLOT
-     sec
-     jsr PLOT
+     ldx #$00        ; Reset X register to $00
+     iny             ; Increment Y register
+     clc             
+     jsr PLOT        
+     sec             
+     jsr PLOT        ; Call PLOT subroutine again
 
-     pla
-     tax
-     pla
+     pla             ; Pull accumulator from stack, restoring its previous state
+     tax             ; Transfer accumulator to X register
+     pla             ; Pull accumulator from stack again, restoring its state from earlier save
 
-     rts
+     rts             ; Return from subroutine
 
 firstSideStore:
-     sta SIDE1
-     txa
-     eor SIDE1
-     sta SIDE1
-     rts
+     sta SIDE1       ; Store accumulator in SIDE1
+     txa             ; Transfer X register to accumulator
+     eor SIDE1       ; Exclusive OR accumulator with SIDE1 to update value
+     sta SIDE1       ; Store updated value back in SIDE1
+     rts             ; Return from subroutine
 
 secondSideStore:
-     sta SIDE2
-     txa
-     eor SIDE2
-     sta SIDE2
-     rts
+     sta SIDE2       ; Store accumulator in SIDE2
+     txa            
+     eor SIDE2      
+     sta SIDE2      
+     rts            
 
 thirdSideStore:
-    sta SIDE3
-    txa
-    eor SIDE3
-    sta SIDE3
-    rts
+    sta SIDE3        ; Store accumulator in SIDE3
+    txa             
+    eor SIDE3       
+    sta SIDE3       
+    rts             
 
 processInput:
+     lsr             ; Logical shift right, dividing accumulator by 2, four times effectively dividing by 16
      lsr
      lsr
      lsr
-     lsr
-     clc
-     adc #$30
-     jsr CHROUT
+     clc             ; Clear carry flag for addition
+     adc #$30        ; Add hexadecimal value $30 to accumulator to convert binary coded decimal to ASCII
+     jsr CHROUT      ; Output character to screen
 
-     pla
-     and #$0F
-     clc
-     adc #$30
-     jsr CHROUT
+     pla             ; Pull accumulator from stack, restoring its previous state
+     and #$0F        ; Perform AND operation with $0F to isolate lower 4 bits
+     clc             
+     adc #$30        ; Add hexadecimal value $30 to convert to ASCII
+     jsr CHROUT      
 
-     sec
-     jsr PLOT
-     ldx #$00
-     iny
-     clc
-     jsr PLOT
+     sec             
+     jsr PLOT        ; Call PLOT subroutine to plot a point
+     ldx #$00        
+     iny             
+     clc             
+     jsr PLOT        ; Call PLOT subroutine to plot another point
 
-     rts
+     rts             ; Return from subroutine
 
 calculateResult:
-    sec
-    jsr PLOT
-    ldx #$15
-    clc
-    jsr PLOT
-    sec
-    jsr PLOT
+    sec             ; Set carry flag before subtraction in PLOT subroutine
+    jsr PLOT        ; Call PLOT subroutine to plot a point
+    ldx #$15        ; Load X register with value $15 for further operations
+    clc             ; Clear carry flag for addition in PLOT subroutine
+    jsr PLOT        
+    sec             ; Set carry flag before subtraction in PLOT subroutine
+    jsr PLOT        ; Call PLOT subroutine again
 
-    sed
-    lda SIDE1
-    adc SIDE2
-    adc SIDE3
-    cld
-    pha
+    sed             ; Set decimal mode for addition
+    lda SIDE1       ; Load SIDE1 into accumulator
+    adc SIDE2       ; Add SIDE2 to accumulator with carry
+    adc SIDE3       ; Add SIDE3 to accumulator with carry
+    cld             
+    pha             ; Push accumulator onto stack to save result
 
-    bcc processInput ; Calculate Perimeter
-    ldx #$14
-    clc
-    jsr PLOT
-    sec
-    jsr PLOT
-    lda #$31 ; Carry
-    jsr CHROUT
+    bcc processInput ; Branch to processInput if carry flag is clear
+    ldx #$14        ; Load X register with $14 for next operations
+    clc             ; Clear carry flag for addition in PLOT subroutine
+    jsr PLOT        ; Call PLOT subroutine to plot a point
+    sec             
+    jsr PLOT        ; Call PLOT subroutine again
+    lda #$31        ; Load accumulator with $31 (ASCII for "1")
+    jsr CHROUT      ; Output character to screen
 
 title:
 dcb "F","I","N","D",32,"P","E","R","I","M","E","T","E","R",32,32,"P",32,"=",32,"A","+","B","+","C"
