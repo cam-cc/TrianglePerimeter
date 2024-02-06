@@ -1,0 +1,273 @@
+define SIDE1 $15; First input
+define SIDE2 $16; Second input
+define SIDE3 $17; Third input
+
+;ASCII keyboard declarations
+define ENTER $0d; ENTER key
+define BACKSPACE $08; BACKSPACE key
+define RIGHT $81; RIGHT key
+define LEFT $83; LEFT key
+
+;Define screen dimensions
+define SCREEN $ffed; Screen size
+define PLOT $fff0; Cursor control
+define SCINIT $ff81; Screen init
+define CHRIN $ffcf; Char input
+define CHROUT $ffd2; Char output
+
+jsr SCINIT
+
+mainLoop:
+     ldy #$00
+     jsr titleText ; Title
+
+     ldy #$00
+     jsr firstSideInput ; Get first number
+     jsr handleInput
+     jsr firstSideStore
+
+     ldy #$00
+     jsr secondSideInput ; Get second number
+     jsr handleInput
+     jsr secondSideStore
+
+     ldy #$00
+     jsr thirdSideInput ; Get third number
+     jsr handleInput
+     jsr thirdSideStore
+
+     ldy #$00
+     jsr resultText  ; Show result label
+     jsr calculateResult ; Calculate and show result
+
+handleInput:
+     sec
+     jsr PLOT
+     ldx #$15
+     clc
+     jsr PLOT
+
+handleInputLoop:
+     sec
+     jsr PLOT
+     jsr CHRIN
+
+keyboardCheck: 
+     cmp #BACKSPACE ; Handle BACKSPACE
+     beq delete
+
+     cmp #RIGHT ; Move to first digit
+     beq moveR
+
+     cmp #LEFT ; Move to second digit
+     beq moveL
+
+     cmp #ENTER ; Confirm input
+     beq move
+
+handleInput:
+     cmp #$30
+     bcc handleInputLoop
+
+     clc
+     cmp #$3a
+     bcs handleInputLoop
+     jsr CHROUT
+
+     sec
+     jsr PLOT
+     cpx #$17
+     bne handleInputLoop
+     dex
+     clc
+     jsr PLOT
+     jmp handleInputLoop
+
+moveL: 
+ cpx #$15
+     beq handleInputLoop
+     jsr CHROUT
+     jmp handleInputLoop
+
+moveR: 
+ cpx #$16
+     beq handleInputLoop
+     jsr CHROUT
+     jmp handleInputLoop
+
+delete:
+ cpx #$15
+     beq handleInputLoop
+     jsr CHROUT
+     jmp handleInputLoop
+
+move:
+     sec
+     jsr PLOT
+     ldx #$15
+     clc
+     jsr PLOT
+     sec
+     jsr PLOT
+
+     clc
+     sbc #$2F
+
+     asl
+     asl
+     asl
+     asl
+
+     pha
+
+     ldx #$16
+     clc
+     jsr PLOT
+     sec
+     jsr PLOT
+
+     clc
+     sbc #$2F
+     pha
+
+     ldx #$00
+     iny
+     clc
+     jsr PLOT
+     sec
+     jsr PLOT
+
+     pla
+     tax
+     pla
+
+     rts
+
+firstSideStore:
+     sta SIDE1
+     txa
+     eor SIDE1
+     sta SIDE1
+     rts
+
+secondSideStore:
+     sta SIDE2
+     txa
+     eor SIDE2
+     sta SIDE2
+     rts
+
+thirdSideStore:
+    sta SIDE3
+    txa
+    eor SIDE3
+    sta SIDE3
+    rts
+
+processInput:
+     lsr
+     lsr
+     lsr
+     lsr
+     clc
+     adc #$30
+     jsr CHROUT
+
+     pla
+     and #$0F
+     clc
+     adc #$30
+     jsr CHROUT
+
+     sec
+     jsr PLOT
+     ldx #$00
+     iny
+     clc
+     jsr PLOT
+
+     rts
+
+calculateResult:
+    sec
+    jsr PLOT
+    ldx #$15
+    clc
+    jsr PLOT
+    sec
+    jsr PLOT
+
+    sed
+    lda SIDE1
+    adc SIDE2
+    adc SIDE3
+    cld
+    pha
+
+    bcc processInput ; Calculate Perimeter
+    ldx #$14
+    clc
+    jsr PLOT
+    sec
+    jsr PLOT
+    lda #$31 ; Carry
+    jsr CHROUT
+
+title:
+dcb "F","I","N","D",32,"P","E","R","I","M","E","T","E","R",32,32,"P",32,"=",32,"A","+","B","+","C"
+dcb $0A ; New line
+dcb 00
+
+firstSide:
+dcb "E","N","T","E","R",32,"B","A","S","E",":"
+dcb 00
+
+secondSide:
+dcb "E","N","T","E","R",32,"S","I","D","E",32,"#","1",":"
+dcb 00
+
+thirdSide:
+dcb "E","N","T","E","R",32,"S","I","D","E",32,"#","2",":"
+dcb 00
+
+resultStr:
+dcb "T","R","I","A","N","G","L","E",32,"P","E","R","I","M","E","T","E","R",":"
+dcb 00
+
+titleText:
+ lda title,y
+	beq goback_main
+	jsr CHROUT
+	iny
+	bne titleText
+
+firstSideInput:
+ lda firstSide,y
+        beq goback_main
+        jsr CHROUT
+        iny
+        bne firstSideInput
+
+secondSideInput:
+ lda secondSide,y
+        beq goback_main
+        jsr CHROUT
+        iny
+        bne secondSideInput
+
+thirdSideInput:
+ lda thirdSide,y
+        beq goback_main
+        jsr CHROUT
+        iny
+        bne thirdSideInput
+
+resultText:
+ lda resultStr,y
+        beq goback_main
+        jsr CHROUT
+        iny
+        bne resultText
+
+goback_main:
+     rts
